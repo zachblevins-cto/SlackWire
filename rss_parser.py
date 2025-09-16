@@ -137,6 +137,59 @@ class RSSParser:
         
         return new_entries
     
+    def parse_feed_no_cache(self, feed_url: str, feed_name: str, 
+                           category: str, keywords: List[str] = None) -> List[Dict]:
+        """Parse RSS feed without cache checking (for slash commands)"""
+        entries = []
+        
+        try:
+            logger.info(f"Parsing feed (no cache): {feed_name}")
+            feed = feedparser.parse(feed_url)
+            
+            if feed.bozo:
+                logger.warning(f"Feed parsing issue for {feed_name}: {feed.bozo_exception}")
+            
+            for entry in feed.entries:
+                # Extract entry data
+                title = entry.get('title', 'No title')
+                link = entry.get('link', '')
+                summary = entry.get('summary', entry.get('description', ''))
+                published = self._parse_published_date(entry)
+                
+                # Filter by keywords if provided
+                if keywords:
+                    content = f"{title} {summary}".lower()
+                    if not any(keyword.lower() in content for keyword in keywords):
+                        continue
+                
+                # Clean summary
+                if summary:
+                    # Remove HTML tags
+                    from bs4 import BeautifulSoup
+                    summary = BeautifulSoup(summary, 'html.parser').get_text()
+                    # Limit length
+                    if len(summary) > 500:
+                        summary = summary[:497] + "..."
+                
+                new_entry = {
+                    'id': self._generate_entry_id(entry),
+                    'title': title,
+                    'link': link,
+                    'summary': summary,
+                    'published': published,
+                    'feed_name': feed_name,
+                    'category': category
+                }
+                
+                entries.append(new_entry)
+            
+            logger.info(f"Found {len(entries)} entries from {feed_name}")
+            
+        except Exception as e:
+            logger.error(f"Error parsing feed {feed_name}: {e}")
+        
+        return entries
+    
     def parse_multiple_feeds(self, feeds: List[Dict], 
                            keywords: List[str] = None) -> List[Dict]:
         """Parse multiple RSS feeds"""

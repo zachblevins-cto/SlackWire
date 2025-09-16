@@ -1,0 +1,16 @@
+[Unit]
+Description=SlackWire AI News Bot
+After=network.target
+
+[Service]
+Type=simple
+User=zachary
+Group=zachary
+WorkingDirectory=/home/zachary/Documents/GitHub/SlackWire
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/usr/bin/python3 /home/zachary/Documents/GitHub/SlackWire/main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

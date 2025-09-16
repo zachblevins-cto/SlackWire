@@ -33,6 +33,16 @@ class AINewsSlackBot:
             """Handle status check command"""
             ack()
             respond("AI News Bot is running and monitoring feeds!")
+        
+        @self.app.command("/ai-news-latest")
+        def handle_latest_command(ack, command, respond):
+            """Handle request for latest articles"""
+            ack()
+            # This will be populated by the main bot
+            if hasattr(self, 'get_latest_callback') and self.get_latest_callback:
+                self.get_latest_callback(respond)
+            else:
+                respond("⚠️ Latest articles feature is initializing. Please try again in a moment.")
     
     def format_article_block(self, article: Dict) -> List[Dict]:
         """Format article as Slack block"""
@@ -46,8 +56,16 @@ class AINewsSlackBot:
             }
         ]
         
-        # Add summary if available
-        if article.get('summary'):
+        # Add AI summary if available, otherwise use original summary
+        if article.get('ai_summary'):
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"🤖 *AI Summary:* {article['ai_summary']}"
+                }
+            })
+        elif article.get('summary'):
             blocks.append({
                 "type": "section",
                 "text": {
