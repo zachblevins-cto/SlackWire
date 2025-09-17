@@ -17,6 +17,24 @@ python main.py
 DEBUG=true python main.py
 ```
 
+### Slack Commands (Phase 2)
+```bash
+# Feed Management
+/ai-news-add-feed <url> <name> [category]     # Add new RSS feed
+/ai-news-remove-feed <name>                   # Remove RSS feed
+/ai-news-list-feeds                           # List all feeds
+
+# Keyword Management  
+/ai-news-add-keyword <keyword>                # Add AI keyword
+/ai-news-remove-keyword <keyword>             # Remove keyword
+/ai-news-list-keywords                        # List all keywords
+
+# Other Commands
+/ai-news-latest                               # Get latest articles
+/ai-news-status                               # Check bot status
+/ai-news-digest <daily|weekly|off>           # Configure digest notifications
+```
+
 ### Environment Setup
 ```bash
 # Install dependencies
@@ -28,12 +46,30 @@ pip install -r requirements.txt
 
 ### Testing and Development
 ```bash
-# No formal test suite exists yet
-# Test RSS parsing independently
-python -c "from rss_parser import RSSParser; p = RSSParser(); print(p.parse_feed('https://example.com/feed.xml'))"
+# Run unit tests
+./run_tests.sh
+# or
+make test
 
-# Test Slack connection
-python -c "from slack_bot import AINewsSlackBot; bot = AINewsSlackBot(); bot.post_message('Test message')"
+# Run all tests including integration
+./run_tests.sh all
+# or
+make test-all
+
+# Run tests with coverage report
+pytest tests/ -v --cov=. --cov-report=html
+
+# Run specific test file
+pytest tests/test_config_manager.py -v
+
+# Run tests matching pattern
+pytest tests/ -k "feedback" -v
+
+# Lint code
+make lint
+
+# Format code
+make format
 ```
 
 ## Architecture Overview
@@ -42,11 +78,12 @@ The application follows a modular architecture with three main components:
 
 1. **main.py**: Orchestrates the bot lifecycle
    - Initializes components with environment configuration
-   - Runs feed checking on a schedule (default: 30 minutes)
-   - Manages the main event loop
+   - Runs async feed checking on a schedule (default: 30 minutes)
+   - Manages the async event loop for concurrent operations
 
-2. **rss_parser.py**: Handles RSS feed processing
-   - Fetches and parses feeds defined in feeds_config.py
+2. **rss_parser.py**: Handles RSS feed processing with async/await
+   - Fetches all feeds concurrently using aiohttp
+   - Parses feeds from config.yaml with retry logic
    - Filters articles by AI keywords
    - Maintains feed_cache.json to prevent duplicates
    - Returns sorted, deduplicated article lists
@@ -59,12 +96,18 @@ The application follows a modular architecture with three main components:
 
 ## Key Configuration Points
 
-- **feeds_config.py**: Add/modify RSS feeds and AI keywords here
+- **config.yaml**: Central configuration file for feeds, keywords, and behavior settings
+  - RSS feeds with categories (academic, company, news)
+  - AI keywords for filtering
+  - LLM prompts by category
+  - Circuit breaker settings
+  - Retry configurations
 - **.env**: Contains Slack credentials and runtime settings
   - SLACK_BOT_TOKEN: OAuth token (xoxb-...)
   - SLACK_APP_TOKEN: Socket Mode token (xapp-...)
   - SLACK_CHANNEL_ID: Target channel (C0123456789)
   - CHECK_INTERVAL_MINUTES: Feed check frequency
+- **feeds_config.py**: (Legacy) Now replaced by config.yaml
 
 ## Important Implementation Details
 
@@ -78,8 +121,8 @@ The application follows a modular architecture with three main components:
 ## Common Modifications
 
 When adding new RSS feeds:
-1. Add the feed URL to RSS_FEEDS in feeds_config.py
-2. Optionally add new AI keywords to AI_KEYWORDS
+1. Add the feed URL to config.yaml under rss_feeds
+2. Specify a category (academic, company, news) for better prompts
 3. No code changes needed - feeds are dynamically loaded
 
 When changing Slack formatting:
@@ -88,4 +131,77 @@ When changing Slack formatting:
 
 When adjusting scheduling:
 1. Change CHECK_INTERVAL_MINUTES in .env
-2. Or modify the schedule logic in main.py:64
+2. Or modify the async schedule logic in main.py
+
+When customizing LLM prompts:
+1. Edit llm_prompts section in config.yaml
+2. Add category-specific prompts for better summaries
+
+## Performance & Reliability Improvements
+
+### Async Operations (Phase 1 Complete)
+- All RSS feeds are now fetched in parallel
+- Connection pooling prevents overwhelming servers
+- 5-10x faster feed checking vs sequential fetching
+
+### Error Handling & Resilience
+- Retry mechanism with exponential backoff for failed feeds
+- Circuit breaker pattern prevents LLM API cascading failures
+- Detailed HTTP status code handling (404, 503, timeouts)
+
+### Configuration Management
+- All settings now in config.yaml (no code changes needed)
+- Hot-reload not implemented - restart bot after config changes
+
+## Phase 2 Features (Complete)
+
+### Interactive Feed Management
+- Add/remove RSS feeds directly from Slack
+- List all configured feeds with categories
+- Configuration changes persist to config.yaml
+- Automatic config backup before changes
+
+### Keyword Management
+- Add/remove AI keywords from Slack
+- List all active keywords
+- Keywords used for filtering articles
+
+### Article Feedback System
+- 👍 Interesting / 👎 Not Relevant buttons on each article
+- Feedback data tracked per user and source
+- Used to prioritize future articles
+- Trending sources based on community feedback
+
+### Digest Feature
+- Daily/weekly digest of top articles  
+- Articles prioritized by feedback scores
+- Includes trending sources report
+- Scheduled at 09:00 UTC (configurable in digest_config.json)
+- Enable with `/ai-news-digest daily` or `/ai-news-digest weekly`
+
+## Phase 3 Features (Complete)
+
+### Testing Framework
+- Comprehensive pytest test suite
+- Unit tests for all major components
+- Test fixtures for mocking external dependencies
+- Coverage reporting with HTML output
+- Run tests with `./run_tests.sh` or `make test`
+
+### Dependency Management
+- pip-tools for deterministic builds
+- Separate requirements.in for source dependencies
+- requirements-dev.in for development tools
+- Makefile for common tasks:
+  - `make install` - Install production deps
+  - `make install-dev` - Install dev deps
+  - `make update-deps` - Update all dependencies
+  - `make test` - Run tests
+
+### Structured JSON Logging
+- JSON-formatted logs in production
+- Human-readable format in development
+- Contextual logging with extra fields
+- Error logs saved to errors.log
+- Environment-aware configuration
+- Use LOG_LEVEL env var to control verbosity

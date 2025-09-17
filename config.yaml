@@ -1,0 +1,82 @@
+# SlackWire Configuration File
+# This file contains all configurable settings for the SlackWire bot
+
+rss_feeds:
+  - url: "https://openai.com/blog/rss.xml"
+    name: "OpenAI Blog"
+    category: "company"
+  - url: "https://www.anthropic.com/rss.xml"
+    name: "Anthropic News"
+    category: "company"
+  - url: "https://deepmind.google/blog/rss.xml"
+    name: "Google DeepMind"
+    category: "company"
+  - url: "https://blogs.microsoft.com/ai/feed/"
+    name: "Microsoft AI Blog"
+    category: "company"
+  - url: "https://ai.meta.com/blog/rss/"
+    name: "Meta AI Blog"
+    category: "company"
+  - url: "https://huggingface.co/blog/feed.xml"
+    name: "Hugging Face Blog"
+    category: "company"
+  - url: "https://news.mit.edu/rss/topic/artificial-intelligence2"
+    name: "MIT AI News"
+    category: "academic"
+  - url: "http://export.arxiv.org/rss/cs.AI"
+    name: "ArXiv AI Papers"
+    category: "academic"
+  - url: "https://venturebeat.com/category/ai/feed/"
+    name: "VentureBeat AI"
+    category: "news"
+  - url: "https://techcrunch.com/category/artificial-intelligence/feed/"
+    name: "TechCrunch AI"
+    category: "news"
+  - url: "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml"
+    name: "The Verge AI"
+    category: "news"
+
+ai_keywords:
+  - "artificial intelligence"
+  - "machine learning"
+  - "deep learning"
+  - "neural network"
+  - "transformer"
+  - "gpt"
+  - "llm"
+  - "large language model"
+  - "ai safety"
+  - "ai alignment"
+  - "generative ai"
+  - "computer vision"
+  - "natural language"
+  - "reinforcement learning"
+  - "diffusion model"
+  - "multimodal"
+  - "foundation model"
+  - "ai research"
+  - "ai ethics"
+  - "chatgpt"
+  - "claude"
+  - "gemini"
+  - "midjourney"
+  - "stable diffusion"
+
+# LLM prompts by source category
+llm_prompts:
+  academic: "Summarize the key contribution and methodology of this research paper based on its abstract. Focus on the technical innovation and potential impact."
+  company: "Provide a 2-3 sentence summary of this company announcement or blog post, highlighting the product/feature and its significance for the AI industry."
+  news: "Provide a concise 2-sentence summary of this news article for a tech executive, focusing on the business implications and market impact."
+  default: "Provide a brief 2-3 sentence summary of this article, highlighting the key points and significance."
+
+# Circuit breaker settings for LLM API
+circuit_breaker:
+  failure_threshold: 5  # Number of consecutive failures before opening circuit
+  recovery_timeout: 900  # Seconds to wait before attempting recovery (15 minutes)
+  half_open_attempts: 2  # Number of successful attempts needed to close circuit
+
+# RSS fetch settings
+rss_fetch:
+  timeout: 30  # Seconds to wait for RSS feed response
+  max_retries: 3  # Number of retry attempts for failed requests
+  retry_delay: 5  # Initial delay in seconds between retries (exponential backoff)

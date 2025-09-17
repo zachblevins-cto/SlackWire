@@ -1,0 +1,11 @@
+# Include production requirements
+-r requirements.in
+
+# Additional development tools
+black
+flake8
+mypy
+types-requests
+types-PyYAML
+ipython
+pre-commit
