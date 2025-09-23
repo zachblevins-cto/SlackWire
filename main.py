@@ -1,6 +1,8 @@
 import os
 import asyncio
 import threading
+import signal
+import sys
 from datetime import datetime, timezone, time
 from dotenv import load_dotenv
 import json
@@ -11,6 +13,8 @@ from rss_parser import AsyncRSSParser
 from slack_bot import AINewsSlackBot
 from llm_summarizer import create_summarizer
 from logger_config import setup_logging, get_logger
+from utils.single_instance import SingleInstance
+from utils.cache_manager import CacheManager
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +26,9 @@ logger = get_logger(__name__)
 
 class AsyncAINewsBot:
     def __init__(self):
+        self.shutdown_event = asyncio.Event()
+        self.cache_manager = CacheManager(max_entries=5000, expiry_days=7)
+        self.slack_thread = None
         # Load configuration
         self.slack_bot_token = os.getenv('SLACK_BOT_TOKEN')
         self.slack_app_token = os.getenv('SLACK_APP_TOKEN')
@@ -231,8 +238,26 @@ class AsyncAINewsBot:
                 respond("📭 No articles found at this time. Please try again later.")
                 return
             
-            # Get top 5 diverse articles
-            diverse_articles = self._get_diverse_articles(all_articles, 5)
+            # Filter articles from the last 7 days
+            from datetime import timedelta
+            cutoff_time = datetime.now(timezone.utc) - timedelta(days=7)
+            recent_articles = [
+                article for article in all_articles
+                if article.get('published') and article['published'] > cutoff_time
+            ]
+            
+            if not recent_articles:
+                respond("📭 No articles found in the last 7 days. RSS feeds may contain older content.")
+                return
+            
+            # Sort by date (newest first)
+            recent_articles.sort(
+                key=lambda x: x.get('published', datetime.min.replace(tzinfo=timezone.utc)),
+                reverse=True
+            )
+            
+            # Get top 5 diverse articles from recent ones
+            diverse_articles = self._get_diverse_articles(recent_articles, 5)
             
             # Generate summaries
             await self.generate_summaries_batch(diverse_articles)
@@ -481,8 +506,17 @@ class AsyncAINewsBot:
                 except Exception as e:
                     logger.error(f"Error checking digest schedule: {e}")
             
-            # Wait for the specified interval
-            await asyncio.sleep(min(self.check_interval * 60, 300))  # Check at least every 5 minutes for digest
+            # Wait for the specified interval or shutdown signal
+            try:
+                await asyncio.wait_for(
+                    self.shutdown_event.wait(),
+                    timeout=min(self.check_interval * 60, 300)
+                )
+                if self.shutdown_event.is_set():
+                    logger.info("Shutdown requested, stopping scheduler...")
+                    break
+            except asyncio.TimeoutError:
+                pass  # Normal timeout, continue loop
             
             # Check feeds
             await self.check_feeds_async()
@@ -491,9 +525,13 @@ class AsyncAINewsBot:
         """Start the bot"""
         logger.info("Starting Async AI News Bot...")
         
+        # Set up signal handlers for graceful shutdown
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
+        
         # Start Slack bot in a separate thread
-        slack_thread = threading.Thread(target=self.slack_bot.start, daemon=True)
-        slack_thread.start()
+        self.slack_thread = threading.Thread(target=self.slack_bot.start, daemon=False)
+        self.slack_thread.start()
         
         # Give Slack bot time to connect
         import time
@@ -503,25 +541,38 @@ class AsyncAINewsBot:
         try:
             self.slack_bot.app.client.chat_postMessage(
                 channel=self.channel_id,
-                text="🚀 AI News Bot is now online with async feed fetching! I'll monitor RSS feeds concurrently for faster updates."
+                text="🚀 AI News Bot is now online with improved stability! I'll monitor RSS feeds concurrently for faster updates."
             )
         except Exception as e:
             logger.error(f"Error posting startup message: {e}")
         
+        # Clean cache on startup
+        logger.info("Cleaning feed cache...")
+        self.cache_manager.clean_feed_cache("feed_cache.json")
+        
         # Start the async scheduler
         asyncio.run(self.run_scheduler_async())
+    
+    def _signal_handler(self, signum, frame):
+        """Handle shutdown signals gracefully."""
+        logger.info(f"Received signal {signum}, shutting down gracefully...")
+        self.shutdown_event.set()
+        # Slack bot doesn't have a stop method, just exit gracefully
+        sys.exit(0)
 
 
 def main():
     """Main entry point"""
-    try:
-        bot = AsyncAINewsBot()
-        bot.start()
-    except KeyboardInterrupt:
-        logger.info("Bot stopped by user")
-    except Exception as e:
-        logger.error(f"Fatal error: {e}")
-        raise
+    # Ensure single instance
+    with SingleInstance('/tmp/slackwire.lock'):
+        try:
+            bot = AsyncAINewsBot()
+            bot.start()
+        except KeyboardInterrupt:
+            logger.info("Bot stopped by user")
+        except Exception as e:
+            logger.error(f"Fatal error: {e}")
+            raise
 
 
 if __name__ == "__main__":

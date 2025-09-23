@@ -8,9 +8,29 @@ User=zachary
 Group=zachary
 WorkingDirectory=/home/zachary/Documents/GitHub/SlackWire
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile=/home/zachary/Documents/GitHub/SlackWire/.env
 ExecStart=/usr/bin/python3 /home/zachary/Documents/GitHub/SlackWire/main.py
 Restart=always
 RestartSec=10
+StandardOutput=append:/home/zachary/Documents/GitHub/SlackWire/slackwire.out
+StandardError=append:/home/zachary/Documents/GitHub/SlackWire/errors.log
+
+# Restart policy
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Memory and CPU limits
+MemoryLimit=2G
+CPUQuota=50%
+
+# Process limits
+LimitNOFILE=4096
+LimitNPROC=512
+
+# Security hardening
+PrivateTmp=true
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target

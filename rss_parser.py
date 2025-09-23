@@ -8,9 +8,12 @@ import hashlib
 import json
 import os
 import yaml
+import time
 from bs4 import BeautifulSoup
 
 from logger_config import get_logger
+from utils.file_lock import atomic_json_file, safe_json_read, safe_json_write
+from utils.cache_manager import CacheManager
 
 logger = get_logger(__name__)
 
@@ -125,6 +128,13 @@ class AsyncRSSParser:
                         logger.warning(f"Service temporarily unavailable (503) for {feed_name}")
                         if attempt < max_retries - 1:
                             wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+                            logger.info(f"Waiting {wait_time} seconds before retry...")
+                            await asyncio.sleep(wait_time)
+                            continue
+                    elif response.status == 429:
+                        logger.warning(f"Rate limited (429) for {feed_name}")
+                        if attempt < max_retries - 1:
+                            wait_time = retry_delay * (2 ** attempt) * 2  # Longer wait for rate limits
                             logger.info(f"Waiting {wait_time} seconds before retry...")
                             await asyncio.sleep(wait_time)
                             continue

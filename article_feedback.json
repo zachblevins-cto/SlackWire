@@ -1,0 +1,77 @@
+{
+  "articles": {
+    "256e427470568552510f75f95b4584e0": {
+      "metadata": {
+        "id": "256e427470568552510f75f95b4584e0",
+        "title": "Here\u2019s who is actually using ChatGPT \u2014 and how they are using it",
+        "feed_name": "The Verge AI",
+        "category": "news"
+      },
+      "feedback": [
+        {
+          "user_id": "U09EW75TH51",
+          "type": "interesting",
+          "timestamp": "2025-09-17T11:08:01.729214"
+        },
+        {
+          "user_id": "U09EKJ1RNQ7",
+          "type": "interesting",
+          "timestamp": "2025-09-17T11:12:14.000723"
+        }
+      ]
+    },
+    "f835624fbe8abf95d6df39219eff6da1": {
+      "metadata": {
+        "id": "f835624fbe8abf95d6df39219eff6da1",
+        "title": "&#8216;Ask Gemini&#8217; AI will tell you what you missed during a Google Meet call",
+        "feed_name": "The Verge AI",
+        "category": "news"
+      },
+      "feedback": [
+        {
+          "user_id": "U09EKJ1RNQ7",
+          "type": "interesting",
+          "timestamp": "2025-09-17T15:34:00.565832"
+        }
+      ]
+    }
+  },
+  "user_preferences": {
+    "U09EW75TH51": {
+      "sources": {
+        "The Verge AI": {
+          "interesting": 1,
+          "not_relevant": 0
+        }
+      },
+      "categories": {
+        "news": {
+          "interesting": 1,
+          "not_relevant": 0
+        }
+      },
+      "total_feedback": 1
+    },
+    "U09EKJ1RNQ7": {
+      "sources": {
+        "The Verge AI": {
+          "interesting": 2,
+          "not_relevant": 0
+        }
+      },
+      "categories": {
+        "news": {
+          "interesting": 2,
+          "not_relevant": 0
+        }
+      },
+      "total_feedback": 2
+    }
+  },
+  "source_scores": {
+    "The Verge AI": {
+      "interesting": 3,
+      "not_relevant": 0
+    }
+  }
+}

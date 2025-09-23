@@ -247,7 +247,7 @@ class AINewsSlackBot:
             
             # Find and update the feedback buttons
             for i, block in enumerate(blocks):
-                if block.get("type") == "actions" and "article_feedback" in str(block):
+                if block.get("type") == "actions" and block.get("block_id", "").startswith("article_feedback_"):
                     # Get current feedback stats
                     feedback_summary = self.feedback_manager.get_article_feedback_summary(article_data['id'])
                     
@@ -341,7 +341,7 @@ class AINewsSlackBot:
             
             blocks.append({
                 "type": "actions",
-                "block_id": "article_feedback",
+                "block_id": f"article_feedback_{article['id'][:8]}",
                 "elements": [
                     {
                         "type": "button",
