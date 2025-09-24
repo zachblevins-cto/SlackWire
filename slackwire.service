@@ -6,15 +6,15 @@ After=network.target
 Type=simple
 User=zachary
 Group=zachary
-WorkingDirectory=/home/zachary/Documents/GitHub/SlackWire
+WorkingDirectory=/home/zachary/Documents/Github/SlackWire
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 Environment="PYTHONUNBUFFERED=1"
-EnvironmentFile=/home/zachary/Documents/GitHub/SlackWire/.env
-ExecStart=/usr/bin/python3 /home/zachary/Documents/GitHub/SlackWire/main.py
+EnvironmentFile=/home/zachary/Documents/Github/SlackWire/.env
+ExecStart=/home/zachary/Documents/Github/SlackWire/venv/bin/python /home/zachary/Documents/Github/SlackWire/main.py
 Restart=always
 RestartSec=10
-StandardOutput=append:/home/zachary/Documents/GitHub/SlackWire/slackwire.out
-StandardError=append:/home/zachary/Documents/GitHub/SlackWire/errors.log
+StandardOutput=append:/home/zachary/Documents/Github/SlackWire/slackwire.out
+StandardError=append:/home/zachary/Documents/Github/SlackWire/errors.log
 
 # Restart policy
 StartLimitIntervalSec=60

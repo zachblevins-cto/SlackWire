@@ -17,10 +17,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "Installing for user: $ACTUAL_USER"
 echo "Working directory: $SCRIPT_DIR"
 
-# Update the service file with correct user
-sed -i "s/User=zachary/User=$ACTUAL_USER/g" "$SCRIPT_DIR/slackwire.service"
-sed -i "s/Group=zachary/Group=$ACTUAL_USER/g" "$SCRIPT_DIR/slackwire.service"
-sed -i "s|/home/zachary|/home/$ACTUAL_USER|g" "$SCRIPT_DIR/slackwire.service"
+# Update the service file with correct user (only if different)
+if [ "$ACTUAL_USER" != "zachary" ]; then
+    sed -i "s/User=zachary/User=$ACTUAL_USER/g" "$SCRIPT_DIR/slackwire.service"
+    sed -i "s/Group=zachary/Group=$ACTUAL_USER/g" "$SCRIPT_DIR/slackwire.service"
+    sed -i "s|/home/zachary|/home/$ACTUAL_USER|g" "$SCRIPT_DIR/slackwire.service"
+fi
 
 # Kill any existing bot process
 echo "Stopping any existing bot process..."
