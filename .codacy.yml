@@ -1,0 +1,89 @@
+---
+# Codacy configuration file for SlackWire
+# This file configures code quality checks and dead code detection
+
+# Exclude files from analysis
+exclude_paths:
+  - "tests/**"
+  - "test_*.py"
+  - "**/__pycache__/**"
+  - "*.pyc"
+  - ".git/**"
+  - ".venv/**"
+  - "venv/**"
+  - "env/**"
+  - "*.egg-info/**"
+  - "build/**"
+  - "dist/**"
+  - "backups/**"
+  - "*.backup"
+  - "*.log"
+  - "*.db"
+  - "slackwire.out"
+  - "feed_cache.json"
+  - "article_feedback.json"
+  - "digest_config.json"
+  - "htmlcov/**"
+  - ".coverage"
+  - "*.md"
+  - "requirements*.txt"
+  - "docker-compose.yml"
+  - "Dockerfile"
+  - ".env*"
+
+# Enable specific tools for Python analysis
+engines:
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - python
+
+  metrics:
+    enabled: true
+
+  coverage:
+    enabled: true
+
+# Python-specific tools that Codacy uses
+tools:
+  # Pylint - comprehensive Python linter
+  pylint:
+    enabled: true
+    python_version: 3
+
+  # Bandit - security linter
+  bandit:
+    enabled: true
+
+  # Prospector - aggregates multiple tools
+  prospector:
+    enabled: true
+
+  # Radon - code complexity checker
+  radon:
+    enabled: true
+
+  # PyFlakes - finds errors and potential problems
+  pyflakes:
+    enabled: true
+
+# Code patterns to check
+patterns:
+  - "**/*.py"
+
+# Coverage settings
+coverage:
+  enabled: true
+  exclude_paths:
+    - "tests/**"
+    - "test_*.py"
+
+# Duplication detection settings
+duplication:
+  min_tokens: 50
+  min_lines: 5
+
+# Security patterns to check
+security:
+  enabled: true

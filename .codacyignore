@@ -1,0 +1,107 @@
+# Codacy ignore file
+# Files and directories to exclude from Codacy analysis
+
+# Test files
+tests/
+test_*.py
+*_test.py
+conftest.py
+
+# Documentation
+*.md
+docs/
+README.md
+MIGRATION.md
+IMPROVEMENTS.md
+CLAUDE.md
+
+# Configuration files
+.env
+.env.*
+config.yaml
+*.yml
+*.yaml
+
+# Generated files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+errors.log
+slackwire.out
+
+# Cache and temporary files
+feed_cache.json
+article_feedback.json
+digest_config.json
+backups/
+*.backup
+*.cache
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Lock files
+*.lock
+/tmp/slackwire.lock
+
+# Package files
+requirements*.txt
+requirements*.in
+Pipfile
+Pipfile.lock
+poetry.lock
+pyproject.toml
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# System files
+.git/
+.gitignore
+.gitattributes
+
+# Service files
+*.service
+install_service.sh
+monitor_bot.sh
+uninstall_service.sh
+setup.sh
+run_tests.sh
+
+# Old/deprecated files
+async_slack_bot.py
+main_old.py
+main.backup.py

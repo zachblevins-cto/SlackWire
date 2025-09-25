@@ -5,17 +5,14 @@ rss_feeds:
   - url: "https://openai.com/blog/rss.xml"
     name: "OpenAI Blog"
     category: "company"
-  # Anthropic doesn't provide an RSS feed, commenting out
-  # - url: "https://www.anthropic.com/blog/rss.xml"
-  #   name: "Anthropic News"
-  #   category: "company"
+ 
   - url: "https://deepmind.google/blog/rss.xml"
     name: "Google DeepMind"
     category: "company"
   - url: "https://blogs.microsoft.com/ai/feed/"
     name: "Microsoft AI Blog"
     category: "company"
-  # Meta AI blog doesn't have RSS, using Meta Engineering instead
+
   - url: "https://engineering.fb.com/feed/"
     name: "Meta Engineering"
     category: "company"
@@ -25,10 +22,7 @@ rss_feeds:
   - url: "https://news.mit.edu/rss/topic/artificial-intelligence2"
     name: "MIT AI News"
     category: "academic"
-  # ArXiv removed per user request
-  # - url: "http://export.arxiv.org/rss/cs.AI"
-  #   name: "ArXiv AI Papers"
-  #   category: "academic"
+
   - url: "https://venturebeat.com/category/ai/feed/"
     name: "VentureBeat AI"
     category: "news"
@@ -37,6 +31,12 @@ rss_feeds:
     category: "news"
   - url: "https://www.theverge.com/rss/index.xml"
     name: "The Verge AI"
+    category: "news"
+  - url: "https://api.axios.com/feed/"
+    name: "Axios"
+    category: "news"
+  - url: "https://rss.beehiiv.com/feeds/2R3C6Bt5wj.xml"
+    name: "The Rundown AI"
     category: "news"
 
 ai_keywords:

@@ -1,5 +1,7 @@
 # AI News Slack Bot
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/YOUR_PROJECT_ID)](https://www.codacy.com/gh/YOUR_GITHUB_USERNAME/SlackWire/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=YOUR_GITHUB_USERNAME/SlackWire&amp;utm_campaign=Badge_Grade)
+
 A Slack bot that monitors RSS feeds from top AI research labs and news sources, automatically posting updates to your Slack channel when new articles are published.
 
 ## Features

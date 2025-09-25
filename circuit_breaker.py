@@ -123,3 +123,11 @@ class CircuitBreaker:
     def reset(self):
         """Manually reset the circuit breaker"""
         self._transition_to_closed()
+
+    def record_success(self):
+        """Record a successful call without using the call method"""
+        self._on_success()
+
+    def record_failure(self):
+        """Record a failed call without using the call method"""
+        self._on_failure()

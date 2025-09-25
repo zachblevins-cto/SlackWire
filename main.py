@@ -7,9 +7,10 @@ from datetime import datetime, timezone, time
 from dotenv import load_dotenv
 import json
 
-from typing import List, Dict
+from typing import List, Dict, Optional, Any
 
 from rss_parser import AsyncRSSParser
+from models import Article, DigestConfig, FeedCategory
 from slack_bot import AINewsSlackBot
 from llm_summarizer import create_summarizer
 from logger_config import setup_logging, get_logger
@@ -95,12 +96,12 @@ class AsyncAINewsBot:
             summaries_enabled=self.enable_summaries
         )
     
-    def _get_diverse_articles(self, articles, max_articles):
+    def _get_diverse_articles(self, articles: List[Article], max_articles: int) -> List[Article]:
         """Get a diverse selection of articles across different sources"""
         # Group articles by source
-        articles_by_source = {}
+        articles_by_source: Dict[str, List[Article]] = {}
         for article in articles:
-            source = article.get('feed_name', 'Unknown')
+            source = article.feed_name
             if source not in articles_by_source:
                 articles_by_source[source] = []
             articles_by_source[source].append(article)
@@ -108,7 +109,7 @@ class AsyncAINewsBot:
         # Sort each source's articles by date
         for source in articles_by_source:
             articles_by_source[source].sort(
-                key=lambda x: x['published'] or datetime.min.replace(tzinfo=timezone.utc),
+                key=lambda x: x.published or datetime.min.replace(tzinfo=timezone.utc),
                 reverse=True
             )
         
@@ -152,13 +153,14 @@ class AsyncAINewsBot:
                 error_type=type(e).__name__
             )
     
-    def _load_digest_config(self) -> dict:
+    def _load_digest_config(self) -> Dict[str, Any]:
         """Load digest configuration from file"""
         digest_file = "digest_config.json"
         if os.path.exists(digest_file):
             try:
                 with open(digest_file, 'r') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    return data
             except Exception as e:
                 logger.error(f"Error loading digest config: {e}")
         return {'enabled': False, 'schedule': None, 'time': '09:00'}
@@ -190,25 +192,27 @@ class AsyncAINewsBot:
         self._save_digest_config()
         logger.info(f"Digest schedule updated: {schedule}")
     
-    async def generate_summaries_batch(self, articles: List[Dict]):
+    async def generate_summaries_batch(self, articles: List[Article]) -> None:
         """Generate summaries for articles in parallel (if possible)"""
         if not self.summarizer:
             return
-        
+
         logger.info(f"Generating AI summaries for {len(articles)} articles...")
-        
+
         # For now, we'll process summaries sequentially
         # (Most LLM APIs don't handle concurrent requests well)
         for article in articles:
             try:
-                summary = self.summarizer.summarize(article)
+                # Convert Article to dict for summarizer
+                article_dict = article.to_dict()
+                summary = self.summarizer.summarize(article_dict)
                 if summary:
-                    article['ai_summary'] = summary
+                    article.ai_summary = summary
             except Exception as e:
                 logger.warning_with_context(
                     "Failed to summarize article",
-                    article_title=article['title'][:50],
-                    article_id=article.get('id'),
+                    article_title=article.title[:50],
+                    article_id=article.id,
                     error=str(e)
                 )
     
@@ -243,7 +247,7 @@ class AsyncAINewsBot:
             cutoff_time = datetime.now(timezone.utc) - timedelta(days=7)
             recent_articles = [
                 article for article in all_articles
-                if article.get('published') and article['published'] > cutoff_time
+                if article.published and article.published > cutoff_time
             ]
             
             if not recent_articles:
@@ -252,7 +256,7 @@ class AsyncAINewsBot:
             
             # Sort by date (newest first)
             recent_articles.sort(
-                key=lambda x: x.get('published', datetime.min.replace(tzinfo=timezone.utc)),
+                key=lambda x: x.published or datetime.min.replace(tzinfo=timezone.utc),
                 reverse=True
             )
             
@@ -275,7 +279,8 @@ class AsyncAINewsBot:
             ]
             
             for article in diverse_articles:
-                blocks.extend(self.slack_bot.format_article_block(article))
+                # Convert Article to dict for Slack formatting
+                blocks.extend(self.slack_bot.format_article_block(article.to_dict()))
             
             # Remove last divider
             if blocks[-1].get("type") == "divider":
@@ -303,7 +308,7 @@ class AsyncAINewsBot:
                 logger.info_with_context(
                     "Found new articles",
                     articles_count=len(new_articles),
-                    sources=list(set(a['feed_name'] for a in new_articles))
+                    sources=list(set(a.feed_name for a in new_articles))
                 )
                 
                 # Limit articles per update
@@ -316,8 +321,9 @@ class AsyncAINewsBot:
                 # Generate summaries
                 await self.generate_summaries_batch(new_articles)
                 
-                # Post to Slack
-                self.slack_bot.post_articles(new_articles)
+                # Post to Slack (convert to dicts for compatibility)
+                articles_dicts = [article.to_dict() for article in new_articles]
+                self.slack_bot.post_articles(articles_dicts)
             else:
                 logger.info("No new articles found")
                 
@@ -348,8 +354,8 @@ class AsyncAINewsBot:
                 cutoff_time -= timedelta(days=7)
             
             recent_articles = [
-                article for article in all_articles 
-                if article.get('published') and article['published'] > cutoff_time
+                article for article in all_articles
+                if article.published and article.published > cutoff_time
             ]
             
             if not recent_articles:
@@ -358,13 +364,13 @@ class AsyncAINewsBot:
             
             # Prioritize articles based on feedback
             for article in recent_articles:
-                article['priority_score'] = self.slack_bot.feedback_manager.should_prioritize_article(
-                    article
+                article.priority_score = self.slack_bot.feedback_manager.should_prioritize_article(
+                    article.to_dict()
                 )
             
             # Sort by priority score and date
             recent_articles.sort(
-                key=lambda x: (x['priority_score'], x.get('published', datetime.min.replace(tzinfo=timezone.utc))),
+                key=lambda x: (x.priority_score, x.published or datetime.min.replace(tzinfo=timezone.utc)),
                 reverse=True
             )
             
@@ -401,17 +407,17 @@ class AsyncAINewsBot:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{i}.* <{article['link']}|{article['title']}>"
+                        "text": f"*{i}.* <{article.link}|{article.title}>"
                     }
                 })
                 
                 # Add summary if available
-                if article.get('ai_summary'):
+                if article.ai_summary:
                     blocks.append({
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": f"🤖 {article['ai_summary']}"
+                            "text": f"🤖 {article.ai_summary}"
                         }
                     })
                 
@@ -420,7 +426,7 @@ class AsyncAINewsBot:
                     "type": "context",
                     "elements": [{
                         "type": "mrkdwn",
-                        "text": f"{article.get('feed_name', 'Unknown')} | {article.get('published', datetime.now()).strftime('%Y-%m-%d %H:%M UTC')}"
+                        "text": f"{article.feed_name} | {(article.published or datetime.now(timezone.utc)).strftime('%Y-%m-%d %H:%M UTC')}"
                     }]
                 })
                 

@@ -86,3 +86,6 @@ desktop.ini
 docs/_build/
 docs/_static/
 docs/_templates/
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
